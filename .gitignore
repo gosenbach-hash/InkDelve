@@ -1,0 +1,5 @@
+# PocketBook SDK (download separately, see README)
+sdk/
+
+# Build output
+*.app
