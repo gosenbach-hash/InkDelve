@@ -29,6 +29,7 @@ Grid::Grid(int width, int height, uint32_t seed, int depth) : w_(width), h_(heig
     }
     const int entrance = edge[rng.below(static_cast<int>(edge.size()))];
     tiles_[entrance].revealed = true;
+    entrance_ = entrance;
 
     // Stairs: random hidden tile at least kMinStairsDistance (Manhattan) from the entrance.
     std::vector<int> far;

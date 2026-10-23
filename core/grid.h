@@ -36,11 +36,16 @@ public:
 
     int revealedCount() const;
 
+    // Index (y * width + x) of the entrance tile, where the hero starts.
+    int entrance() const { return entrance_; }
+    void setEntrance(int index) { entrance_ = index; }
+
     // Used by Game (and tests) to change a tile after generation.
     void setTile(int x, int y, TileKind kind, int value, bool revealed);
 
 private:
     int w_, h_;
+    int entrance_ = 0;
     std::vector<Tile> tiles_;
 };
 

@@ -207,6 +207,19 @@ int main() {
         CHECK(Game::load(c.serialize(), l));
         CHECK(l.score() == c.score() && l.kills() == 1 && l.totalGold() == c.totalGold());
     }
+    // The entrance is recovered after save/load, on floor 1 and on deeper floors.
+    {
+        Game g(11);
+        for (int d = 0; d < 3; ++d) {
+            Game r(1);
+            CHECK(Game::load(g.serialize(), r));
+            CHECK(r.grid().entrance() == g.grid().entrance());
+            CHECK(r.grid().at(r.grid().entrance() % 6, r.grid().entrance() / 6).kind == TileKind::Empty);
+            g.mutableGrid().setTile(0, 0, TileKind::Stairs, 0, true);
+            CHECK(g.tap(0, 0) == TapResult::Descended);
+            if (g.shopOpen()) g.leaveShop();
+        }
+    }
     // High score: keeps the best score and its floor; ties do not replace; bad input rejected.
     {
         HighScore h;

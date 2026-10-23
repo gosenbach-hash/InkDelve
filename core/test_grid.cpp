@@ -119,6 +119,7 @@ int main() {
                 ++tiles;
             }
         CHECK(revealed == 1);
+        CHECK(q.entrance() == ey * 6 + ex);
         CHECK(ex == 0 || ey == 0 || ex == 5 || ey == 4);
         const int d = (sx > ex ? sx - ex : ex - sx) + (sy > ey ? sy - ey : ey - sy);
         CHECK(d >= Grid::kMinStairsDistance);

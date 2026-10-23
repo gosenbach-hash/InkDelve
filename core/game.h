@@ -78,6 +78,10 @@ public:
     static const int kRows = 5;
 
 private:
+    // Seed of the level at `depth`: floor 1 uses the run seed itself.
+    static uint32_t levelSeed(uint32_t seed, int depth) {
+        return depth == 1 ? seed : seed + static_cast<uint32_t>(depth) * 7919u;
+    }
     TapResult afterBoardChange(TapResult r);
 
     uint32_t seed_;

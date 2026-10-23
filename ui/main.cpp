@@ -96,28 +96,20 @@ static void layout() {
     scoreY = btnY + kBtnH + kMargin;
 }
 
-static int tileColor(const Tile &t) {
-    if (!t.revealed) return 0x00555555;
-    switch (t.kind) {
-    case TileKind::Monster: return 0x00CC0000;
-    case TileKind::Gold:    return 0x00FFCC00;
-    case TileKind::Potion:  return 0x0000AA00;
-    case TileKind::Stairs:  return 0x000000CC;
-    default:                return 0x00DDDDDD;
-    }
-}
-
 static void drawHud() {
     char buf[32];
     const Hero &h = game->hero();
     const int third = ScreenWidth() / 3;
-    const int cy = kHeader / 2 + 10;
-    FillArea(0, 0, ScreenWidth(), kHeader, 0x00FFFFFF);
+    const int cy = kHeader / 2 - 4;
+    FillArea(0, 0, ScreenWidth(), kHeader, 0x00EEEEEE);
+    FillArea(0, kHeader - 6, ScreenWidth(), 6, 0x00000000);
     SetFont(font, 0x00000000);
 
+    // HP: heart, number, and a bar underneath.
     gfx::drawHeart(40 + 30, cy);
     std::snprintf(buf, sizeof buf, "%d/%d", h.hp, h.maxHp);
-    DrawTextRect(40 + 80, 20, third - 120, kHeader - 20, buf, ALIGN_LEFT | VALIGN_MIDDLE);
+    DrawTextRect(40 + 80, 6, third - 120, kHeader - 36, buf, ALIGN_LEFT | VALIGN_MIDDLE);
+    gfx::drawHpBar(40 + 80, kHeader - 36, third - 130, 22, h.hp, h.maxHp);
 
     gfx::drawCoin(third + 40 + 30, cy);
     std::snprintf(buf, sizeof buf, "%d", h.gold);
@@ -128,6 +120,22 @@ static void drawHud() {
     DrawTextRect(2 * third + 40 + 80, 20, third - 120, kHeader - 20, buf, ALIGN_LEFT | VALIGN_MIDDLE);
 }
 
+// Panel over the board once the hero has died.
+static void drawGameOver() {
+    char buf[64];
+    const int pw = gw * 8 / 10, ph = gh * 4 / 10;
+    const int pxl = gx + (gw - pw) / 2, pyl = gy + (gh - ph) / 2;
+    FillArea(pxl, pyl, pw, ph, 0x00FFFFFF);
+    gfx::outline(pxl, pyl, pw, ph, 8, 0x00000000);
+    SetFont(font, 0x00CC0000);
+    DrawTextRect(pxl, pyl, pw, ph / 3, "GAME OVER", ALIGN_CENTER | VALIGN_MIDDLE);
+    SetFont(font, 0x00000000);
+    std::snprintf(buf, sizeof buf, "Floor %d    Score %d", game->depth(), game->score());
+    DrawTextRect(pxl, pyl + ph / 3, pw, ph / 3, buf, ALIGN_CENTER | VALIGN_MIDDLE);
+    std::snprintf(buf, sizeof buf, "Best %d (floor %d)", best.score, best.floor);
+    DrawTextRect(pxl, pyl + 2 * ph / 3, pw, ph / 3, buf, ALIGN_CENTER | VALIGN_MIDDLE);
+}
+
 static void drawGrid() {
     const Grid &grid = game->grid();
     for (int y = 0; y < kRows; ++y) {
@@ -135,23 +143,9 @@ static void drawGrid() {
             const Tile &t = grid.at(x, y);
             const int px = gx + x * (cell + kGap);
             const int py = gy + y * (cell + kGap);
-            FillArea(px, py, cell, cell, tileColor(t));
-            // Frontier tiles (tappable) get a thick black border.
-            if (!game->over() && grid.canReveal(x, y)) {
-                DrawRect(px, py, cell, cell, 0x00000000);
-                DrawRect(px + 1, py + 1, cell - 2, cell - 2, 0x00000000);
-                DrawRect(px + 2, py + 2, cell - 4, cell - 4, 0x00000000);
-            }
-            if (!t.revealed) {
-                if (grid.blockedByMonster(x, y)) {
-                    gfx::drawX(px, py, cell);  // locked by an adjacent monster
-                } else {
-                    SetFont(font, 0x00FFFFFF);
-                    DrawTextRect(px, py, cell, cell, "?", ALIGN_CENTER | VALIGN_MIDDLE);
-                }
-            } else {
-                gfx::drawTileIcon(t, px, py, cell, font);
-            }
+            const bool tappable = !game->over() && grid.canReveal(x, y);
+            const bool locked = !t.revealed && grid.blockedByMonster(x, y);
+            gfx::drawTile(t, px, py, cell, font, game->depth(), y * kCols + x == grid.entrance(), tappable, locked);
         }
     }
 }
@@ -163,7 +157,8 @@ static void drawMessage() {
 }
 
 static void drawButton() {
-    DrawRect(gx, btnY, gw, kBtnH, 0x00000000);
+    FillArea(gx, btnY, gw, kBtnH, 0x00EEEEEE);
+    gfx::outline(gx, btnY, gw, kBtnH, 5, 0x00000000);
     SetFont(font, 0x00000000);
     DrawTextRect(gx, btnY, gw, kBtnH, "New game", ALIGN_CENTER | VALIGN_MIDDLE);
 }
@@ -190,17 +185,24 @@ static void drawShop() {
         const int y = shopBtnY(i), bh = shopBtnH();
         const bool enabled = (i == 2) || canBuy;
         const int color = enabled ? 0x00000000 : 0x00999999;
-        DrawRect(gx, y, gw, bh, color);
-        DrawRect(gx + 1, y + 1, gw - 2, bh - 2, color);
-        DrawRect(gx + 2, y + 2, gw - 4, bh - 4, color);
+        gfx::outline(gx, y, gw, bh, 5, color);
+        if (enabled) {
+            if (i == 0) gfx::drawSword(gx + 90, y + bh / 2);
+            else if (i == 1) gfx::drawHeart(gx + 90, y + bh / 2 - 6);
+            else gfx::drawDepth(gx + 90, y + bh / 2);
+        }
         SetFont(font, color);
-        DrawTextRect(gx, y, gw, bh, labels[i], ALIGN_CENTER | VALIGN_MIDDLE);
+        DrawTextRect(gx + 160, y, gw - 180, bh, labels[i], ALIGN_CENTER | VALIGN_MIDDLE);
     }
 }
 
 static void drawBoard() {
-    if (game->shopOpen()) drawShop();
-    else drawGrid();
+    if (game->shopOpen()) {
+        drawShop();
+    } else {
+        drawGrid();
+        if (game->over()) drawGameOver();
+    }
 }
 
 static void drawScore() {

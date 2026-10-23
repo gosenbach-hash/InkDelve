@@ -1,20 +1,28 @@
-// Flat, bold icons drawn from InkView primitives (no bitmaps). UI only.
+// Flat, bold graphics drawn from InkView primitives (no bitmaps). UI only.
 #pragma once
 #include "grid.h"
 #include "inkview.h"
 
 namespace gfx {
 
-// Draws the face of a revealed tile (icon plus its number) into the square at (px,py) of size s.
-// Hidden and empty tiles are handled by the caller.
-void drawTileIcon(const inkdelve::Tile &t, int px, int py, int s, ifont *font);
+// Draws one board tile (background, bevel/outline and icon) into the square at (px,py) of size s.
+//  depth     current floor; deeper floors draw fiercer monsters
+//  entrance  this tile is where the hero started (draws the hero)
+//  tappable  hidden tile that can be revealed right now
+//  locked    hidden tile locked by an adjacent monster (drawn with an X)
+void drawTile(const inkdelve::Tile &t, int px, int py, int s, ifont *font, int depth, bool entrance,
+              bool tappable, bool locked);
 
-// Bold white X for a hidden tile locked by an adjacent monster.
-void drawX(int px, int py, int s);
-
-// Small HUD icons, centered on (cx,cy), roughly 60px across.
+// HUD icons, centered on (cx,cy), roughly 60px across.
 void drawHeart(int cx, int cy);
 void drawCoin(int cx, int cy);
 void drawDepth(int cx, int cy);
+void drawSword(int cx, int cy);
+
+// Horizontal HP bar with a black outline; the filled part is red.
+void drawHpBar(int x, int y, int w, int h, int hp, int maxHp);
+
+// Black rectangular outline `t` pixels thick, drawn inside (x,y,w,h).
+void outline(int x, int y, int w, int h, int t, int color);
 
 }  // namespace gfx

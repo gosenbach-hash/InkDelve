@@ -1,0 +1,31 @@
+InkDelve home-screen icon (PocketBook Era Color, firmware 6.10, view.json "version": "7")
+
+Easiest: use the ready-made view.json in this folder (your original plus the U_inkdelve entry).
+
+1. Connect the reader by USB.
+2. Create the folder  applications/icons  on the reader if it does not exist, and copy
+   inkdelve.bmp and inkdelve_f.bmp into it.
+3. BACK UP  system/config/desktop/view.json on the reader (copy it somewhere safe), then replace it
+   with the view.json from this folder. (Or merge by hand: add the "U_inkdelve" block below inside
+   the "applications" object, after the "_comment" array, with a comma between them.)
+
+        "U_inkdelve": {
+            "path": "applications/inkdelve.app",
+            "title": "InkDelve",
+            "icon": { "path": "applications/icons/inkdelve.bmp" },
+            "focused_icon": { "path": "applications/icons/inkdelve_f.bmp" }
+        }
+
+4. Eject the reader and reboot it.
+
+Notes
+- The user-app key must start with "U_". Paths are relative to the user space (/mnt/ext1), following
+  the examples in the file's own comment block.
+- If the icon does not show, try the absolute form from the MobileRead wiki instead:
+    "icon": "/mnt/ext1/applications/icons/inkdelve.bmp",
+    "focused_icon": "/mnt/ext1/applications/icons/inkdelve_f.bmp"
+  and "path": "/mnt/ext1/applications/inkdelve.app".
+- If the reader's own view.json differs from the one you pasted (other firmware, other apps added
+  later), merge by hand rather than replacing it. The firmware may reset this file after an update.
+
+Source: https://wiki.mobileread.com/wiki/Pocketbook_Configuration

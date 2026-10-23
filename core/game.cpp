@@ -70,7 +70,7 @@ TapResult Game::tap(int x, int y) {
         // Finishing every kShopEvery-th level opens the shop before the next one.
         shopOpen_ = (depth_ % kShopEvery) == 0;
         ++depth_;
-        grid_ = Grid(kCols, kRows, seed_ + static_cast<uint32_t>(depth_) * 7919u, depth_);
+        grid_ = Grid(kCols, kRows, levelSeed(seed_, depth_), depth_);
         return TapResult::Descended;
     }
 
@@ -135,6 +135,8 @@ bool Game::load(const std::string &text, Game &out) {
     Game g(static_cast<uint32_t>(seed));
     g.depth_ = depth;
     g.hero_ = hero;
+    // The entrance is not saved: regenerate the level's layout to recover it (it only depends on the seed).
+    g.grid_.setEntrance(Grid(kCols, kRows, levelSeed(g.seed_, depth), depth).entrance());
     g.shopOpen_ = shop == 1;
     g.kills_ = kills;
     g.totalGold_ = totalGold;
